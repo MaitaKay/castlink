@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Castlink</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#2450d6">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
 :root{--bg:#eef2f6;--card:#fff;--ink:#12263a;--mute:#5b6d7f;--line:#d5dde6;--acc:#2450d6;--accfg:#fff;--bad:#b3261e;color-scheme:light}
 @media (prefers-color-scheme:dark){:root{--bg:#0f1a26;--card:#17283a;--ink:#e8eef5;--mute:#9db0c3;--line:#2a3f55;--acc:#8fb0ff;--accfg:#0f1a26;--bad:#ff8a80;color-scheme:dark}}
@@ -234,6 +238,14 @@ $('#seek').oninput=e=>{dragging=true;$('#cur').textContent=fmt(e.target.value/10
 $('#seek').onchange=e=>{seekTo(e.target.value/1000*player.duration);dragging=false};
 $('#vol').oninput=e=>{player.volumeLevel=+e.target.value;ctrl.setVolumeLevel()};
 $('#stop').onclick=()=>{ctrl.stop();cast.framework.CastContext.getInstance().endCurrentSession(true);$('#bar').hidden=true;setStatus('Stopped.')};
+// Installable app + "Share to Castlink"
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+(function(){
+  const q=new URLSearchParams(location.search);
+  const raw=[q.get('url'),q.get('text'),q.get('title')].filter(Boolean).join(' ');
+  const link=(raw.match(/https?:\/\/[^\s]+/)||[])[0];
+  if(link){$('#url').value=link;history.replaceState(null,'',location.pathname);$('#go').click()}
+})();
 // Keep the controls fresh while the video plays
 setInterval(()=>{if(player&&player.isConnected&&player.mediaInfo&&!dragging)sync()},500);
 </script>

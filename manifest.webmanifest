@@ -1,0 +1,39 @@
+{
+ "name": "Castlink",
+ "short_name": "Castlink",
+ "description": "Paste a video link and cast it to your Chromecast.",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#eef2f6",
+ "theme_color": "#2450d6",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "any"
+  },
+  {
+   "src": "icon-maskable-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ],
+ "share_target": {
+  "action": "./",
+  "method": "GET",
+  "params": {
+   "title": "title",
+   "text": "text",
+   "url": "url"
+  }
+ }
+}
