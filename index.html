@@ -89,7 +89,7 @@ small{color:var(--mute)}
 const $=s=>document.querySelector(s);
 const MIME={mp4:'video/mp4',m4v:'video/mp4',mov:'video/mp4',webm:'video/webm',m3u8:'application/x-mpegURL',mpd:'application/dash+xml',mp3:'audio/mpeg',m4a:'audio/mp4'};
 const MEDIA_RE=/\.(mp4|m4v|mov|webm|m3u8|mpd|mp3|m4a)(?=[?#]|$)/i;
-let current=null, player=null, ctrl=null;
+let current=null, player=null, ctrl=null, sdk=false, sdkChecked=false;
 
 function setStatus(msg,err){const s=$('#status');s.textContent=msg||'';s.className='status'+(err?' err':'')}
 
@@ -160,16 +160,37 @@ function chosen(){return current.files[+$('#q').value]}
 function setPreview(){const v=$('#prev');v.poster=current.thumb||'';v.src=chosen().url}
 
 /* ---------- Cast ---------- */
+const canRemote=()=>!!($('#prev').remote);
 window.__onGCastApiAvailable=ok=>{
-  if(!ok){setStatus('Casting isn’t available here. Open this page in Chrome over HTTPS.',true);return}
+  sdkChecked=true;
+  if(!ok){
+    setStatus(canRemote()?'Using your browser’s built-in casting. Find a video, then tap Cast to TV.':'Casting isn’t available in this browser. Use Chrome on Android or desktop.',!canRemote());
+    return;
+  }
+  sdk=true;
   const ctx=cast.framework.CastContext.getInstance();
   ctx.setOptions({receiverApplicationId:chrome.cast.media.DEFAULT_MEDIA_RECEIVER_APP_ID,autoJoinPolicy:chrome.cast.AutoJoinPolicy.ORIGIN_SCOPED});
   player=new cast.framework.RemotePlayer(); ctrl=new cast.framework.RemotePlayerController(player);
   ctrl.addEventListener(cast.framework.RemotePlayerEventType.ANY_CHANGE,sync);
 };
 
+setTimeout(()=>{if(!sdkChecked&&canRemote())setStatus('Using your browser’s built-in casting. Find a video, then tap Cast to TV.')},3000);
+$('#prev').remote?.addEventListener('connect',()=>setStatus('Casting. Use the video controls to play, pause and scrub.'));
+$('#prev').remote?.addEventListener('disconnect',()=>setStatus('Stopped casting.'));
+
 $('#cast').onclick=async()=>{
-  if(!window.cast||!cast.framework){setStatus('Casting isn’t available here. Use Chrome over HTTPS.',true);return}
+  if(!sdk){
+    const v=$('#prev');
+    if(!v.remote){setStatus('This browser can’t cast. Use Chrome on Android or desktop.',true);return}
+    try{
+      await v.remote.prompt();
+      setStatus('Casting. Use the video controls above to play, pause and scrub.');
+    }catch(e){
+      if(e.name==='NotFoundError') setStatus('No Chromecast found. Make sure your phone and TV are on the same Wi-Fi.',true);
+      else if(e.name!=='NotAllowedError') setStatus('Couldn’t start casting ('+e.name+').',true);
+    }
+    return;
+  }
   const ctx=cast.framework.CastContext.getInstance();
   try{
     let s=ctx.getCurrentSession();
